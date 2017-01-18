@@ -33,14 +33,17 @@ public class ChooseLobbyState extends BasicGameState {
 	private String message = "";
 	private boolean gameCreated = false;
 
-	public ChooseLobbyState(Socket socket) {
+	public ChooseLobbyState() {
+	}
+	
+	public void setSocket(Socket socket){
 		this.socket = socket;
 	}
 
 	@Override
 	public void init(GameContainer container, StateBasedGame game) throws SlickException {
 		idField = new TextField(container, container.getDefaultFont(), PongGame.WIDTH / 2 - 100,
-				PongGame.HEIGHT / 2 - 10, 200, 20);
+				PongGame.HEIGHT / 2 - 20, 200, 20);
 		idField.setBackgroundColor(Color.white);
 		idField.setBorderColor(Color.white);
 		idField.setTextColor(Color.black);
@@ -51,8 +54,8 @@ public class ChooseLobbyState extends BasicGameState {
 	@Override
 	public void enter(GameContainer container, StateBasedGame game) throws SlickException {
 		LOGGER.debug("Entered Choose lobby game state");
-		super.enter(container, game);
 		idField.setAcceptingInput(true);
+		gameCreated = false;
 	}
 
 	@Override
@@ -69,6 +72,9 @@ public class ChooseLobbyState extends BasicGameState {
 			idField.setAcceptingInput(false);
 			connectToGame(requestedGameId, game);
 		}
+		if(container.getInput().isKeyPressed(Input.KEY_TAB)){
+			idField.setFocus(true);
+		}
 		if (isMouseOnButton() && !gameCreated) {
 			if (isButtonPressed()) {
 				gameCreated = true;
@@ -81,13 +87,13 @@ public class ChooseLobbyState extends BasicGameState {
 		try {
 			PrintWriter socketWriter = new PrintWriter(socket.getOutputStream(), true);
 			BufferedReader socketReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			
+
 			LOGGER.debug("Sending request for game : " + requestedGameId);
 			socketWriter.println(requestedGameId);
-			
+
 			String response = socketReader.readLine();
 			LOGGER.debug("Received response : " + response);
-			
+
 			interpreteResponse(game, socketReader, response);
 		} catch (IOException e) {
 			LOGGER.error("Server disconnected!", e);
@@ -99,9 +105,11 @@ public class ChooseLobbyState extends BasicGameState {
 			throws IOException {
 		if (OK_RESPONSE.equals(response)) {
 			gameId = socketReader.readLine();
+			LOGGER.debug("Received gameid = {}", gameId);
 			message = "";
 			PongGameState gameState = (PongGameState) game.getState(PongGame.PONG_GAME_STATE);
 			gameState.setGameId(gameId);
+			LOGGER.debug("Set PongGameState id and now switching state.");
 			game.enterState(PongGame.PONG_GAME_STATE);
 		} else {
 			gameCreated = false;
@@ -118,7 +126,7 @@ public class ChooseLobbyState extends BasicGameState {
 		int mouseX = Mouse.getX();
 		int mouseY = Mouse.getY();
 		return mouseX >= PongGame.WIDTH / 2 - 100 && mouseX <= PongGame.WIDTH / 2 + 100
-				&& mouseY >= PongGame.HEIGHT / 2 - 75 && mouseY <= PongGame.HEIGHT / 2 + 25;
+				&& mouseY >= PongGame.HEIGHT / 2 - 75 && mouseY <= PongGame.HEIGHT / 2 - 25;
 	}
 
 	private void sendNewGameRequest(StateBasedGame game) throws SlickException {

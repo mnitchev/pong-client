@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 
 import org.newdawn.slick.Color;
@@ -32,13 +34,15 @@ public class AuthenticationState extends BasicGameState {
 	private static final int FIELD_HEIGHT = 20;
 
 	private Socket socket;
+	private TextField serverNameField;
 	private TextField usernameField;
 	private TextField passwordField;
 
 	private boolean authenticated = false;
+	private String message = "";
+	private boolean alreadyConnected = false;
 
-	public AuthenticationState(Socket socket) {
-		this.socket = socket;
+	public AuthenticationState() {
 	}
 
 	@Override
@@ -55,36 +59,84 @@ public class AuthenticationState extends BasicGameState {
 				FIELD_WIDTH, FIELD_HEIGHT);
 		this.passwordField = new TextField(container, container.getDefaultFont(), PASSWORD_FIELD_X, PASSWORD_FIELD_Y,
 				FIELD_WIDTH, FIELD_HEIGHT);
-		usernameField.setBackgroundColor(Color.white);
-		usernameField.setBorderColor(Color.white);
-		usernameField.setTextColor(Color.black);
+		this.serverNameField = new TextField(container, container.getDefaultFont(), USERNAME_FIELD_X,
+				USERNAME_FIELD_Y - 40, FIELD_WIDTH, FIELD_HEIGHT);
 
-		passwordField.setBackgroundColor(Color.white);
-		passwordField.setBorderColor(Color.white);
-		passwordField.setTextColor(Color.black);
+		serverNameField.setMaxLength(15);
+		usernameField.setMaxLength(25);
+		passwordField.setMaxLength(10);
+		setInputField(serverNameField);
+		setInputField(usernameField);
+		setInputField(passwordField);
+	}
+
+	private void setInputField(TextField field) {
+		field.setBackgroundColor(Color.white);
+		field.setBorderColor(Color.white);
+		field.setTextColor(Color.black);
 	}
 
 	@Override
 	public void render(GameContainer container, StateBasedGame game, Graphics graphics) throws SlickException {
+		graphics.drawString("Login or Register", PongGame.WIDTH / 2 - 80, PongGame.HEIGHT / 2 - 95);
+		this.serverNameField.render(container, graphics);
 		this.usernameField.render(container, graphics);
 		this.passwordField.render(container, graphics);
+		graphics.drawString(message, PongGame.WIDTH / 2 - 110, PongGame.HEIGHT / 2 + 35);
 	}
 
 	@Override
 	public void update(GameContainer container, StateBasedGame game, int delta) throws SlickException {
 		if (container.getInput().isKeyPressed(Input.KEY_ENTER) && !authenticated) {
 			lockFields();
-			String username = usernameField.getText();
-			String password = passwordField.getText();
-			sendAuthenticationInformation(username, password, game);
+			if(!alreadyConnected ){
+				String serverAddress = serverNameField.getText();
+				connectToServer(serverAddress, game);
+			}
+			if (alreadyConnected) {
+				String username = usernameField.getText();
+				String password = passwordField.getText();
+				sendAuthenticationInformation(username, password, game);
+			}
 		} else if (container.getInput().isKeyPressed(Input.KEY_TAB)) {
+			setNextFocus();
+		}
+
+	}
+
+	private void setNextFocus() {
+		if (serverNameField.hasFocus()) {
+			usernameField.setFocus(true);
+		} else {
 			if (usernameField.hasFocus()) {
 				passwordField.setFocus(true);
 			} else {
-				usernameField.setFocus(true);
+				serverNameField.setFocus(true);
 			}
 		}
+	}
 
+	private void connectToServer(String serverAddress, StateBasedGame game) {
+		try {
+			LOGGER.debug("Connecting");
+			Socket socketConnection = new Socket();
+			socketConnection.connect(new InetSocketAddress(InetAddress.getByName(serverAddress), PongGame.PORT), 2000);
+			this.socket = socketConnection;
+			serverNameField.setAcceptingInput(false);
+			alreadyConnected = true;
+			setSocketsOnOtherStates(game);
+		} catch (IOException e) {
+			LOGGER.debug("Server not found", e);
+			message = "    Server not found";
+			openFields();
+		}
+	}
+
+	private void setSocketsOnOtherStates(StateBasedGame game) {
+		ChooseLobbyState lobbyState = (ChooseLobbyState) game.getState(PongGame.CHOOSE_LOBBY_STATE_ID);
+		lobbyState.setSocket(socket);
+		PongGameState gameState = (PongGameState) game.getState(PongGame.PONG_GAME_STATE);
+		gameState.setSocket(socket);
 	}
 
 	private void lockFields() {
@@ -94,15 +146,11 @@ public class AuthenticationState extends BasicGameState {
 
 	private void sendAuthenticationInformation(String username, String password, StateBasedGame game)
 			throws SlickException {
-		LOGGER.debug("Attemtping to authenticate with : " + username + " " + password);
 		try {
 			PrintWriter socketWriter = new PrintWriter(socket.getOutputStream(), true);
 			BufferedReader socketReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			LOGGER.debug("Sending username");
 			socketWriter.println(username);
-			LOGGER.debug("Sending password");
 			socketWriter.println(password);
-			LOGGER.debug("Waiting for response");
 			String response = socketReader.readLine();
 			interpretResponse(response, game);
 		} catch (IOException e) {
@@ -115,10 +163,11 @@ public class AuthenticationState extends BasicGameState {
 		LOGGER.debug("Server response : " + response);
 		switch (response) {
 		case OK_RESPONSE:
-			authenticated = true;
-			switchStateAndCleanUp(game);
+			message = "";
+			switchState(game);
 			break;
 		case WRONG_PASSWORD_RESPONSE:
+			message = "Wrong username or password";
 			openFields();
 			break;
 		}
@@ -129,10 +178,10 @@ public class AuthenticationState extends BasicGameState {
 		passwordField.setAcceptingInput(true);
 	}
 
-	private void switchStateAndCleanUp(StateBasedGame game) {
+	private void switchState(StateBasedGame game) {
 		game.enterState(PongGame.CHOOSE_LOBBY_STATE_ID);
 	}
-	
+
 	@Override
 	public int getID() {
 		return PongGame.AUTHENTICATION_STATE_ID;

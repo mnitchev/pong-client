@@ -1,4 +1,4 @@
-package bg.uni_sofia.s81167.game;
+package bg.uni_sofia.s81167.game.state;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -14,6 +14,7 @@ public class InputSenderThread implements Runnable {
 	private Socket socket;
 	private Input input;
 	private boolean running = true;
+	private PrintWriter socketWriter;
 
 	public InputSenderThread(Socket socket, Input input) {
 		this.socket = socket;
@@ -21,14 +22,23 @@ public class InputSenderThread implements Runnable {
 	}
 
 	public void stopThread() {
-		this.running = false;
+		if (running) {
+			LOGGER.error("Stopping input thread");
+			this.running = false;
+			socketWriter.println(Input.KEY_ESCAPE);
+		}
 	}
 
 	@Override
 	public void run() {
-		try{
-			PrintWriter socketWriter = new PrintWriter(socket.getOutputStream(), true);
+		try {
+			this.socketWriter = new PrintWriter(socket.getOutputStream(), true);
 			while (running) {
+				try {
+					Thread.sleep(10);
+				} catch (InterruptedException e) {
+					LOGGER.warn("Thread interrupted. This shouldn't happen, but not an major issue.", e);
+				}
 				processInput(socketWriter);
 			}
 		} catch (IOException e) {
@@ -39,17 +49,15 @@ public class InputSenderThread implements Runnable {
 	}
 
 	private void processInput(PrintWriter socketWriter) {
-		if (input.isKeyDown(Input.KEY_UP)) {
+		if (input.isKeyPressed(Input.KEY_UP)) {
 			sendInput(socketWriter, Input.KEY_UP);
-		} else if (input.isKeyDown(Input.KEY_DOWN)) {
+		} else if (input.isKeyPressed(Input.KEY_DOWN)) {
 			sendInput(socketWriter, Input.KEY_DOWN);
-		} else if (input.isKeyDown(Input.KEY_SPACE)) {
-			sendInput(socketWriter, Input.KEY_SPACE);
 		}
 	}
 
 	private void sendInput(PrintWriter socketWriter, int key) {
-		socketWriter.print(key);
+		socketWriter.println(key);
 	}
 
 }

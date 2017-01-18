@@ -14,10 +14,9 @@ public class Main {
 
 	public static void main(String[] args) throws UnknownHostException, IOException {
 		try {
-			Socket socket = new Socket(InetAddress.getByName(PongGame.SERVER_ADDRESS), PongGame.PORT);
-			
-			AppGameContainer container = new AppGameContainer(new PongGame(socket));
+			AppGameContainer container = new AppGameContainer(new PongGame());
 			container.setDisplayMode(PongGame.WIDTH, PongGame.HEIGHT, false);
+			container.setShowFPS(false);
 			container.start();
 		} catch (SlickException e) {
 			System.out.println("Failed to start job. Application closing.");

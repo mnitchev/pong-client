@@ -4,11 +4,11 @@ import org.newdawn.slick.Graphics;
 
 public class Ball {
 
-	public static final float RADIUS = 10;
+	public static final float RADIUS = 20;
 	public int positionX;
 	public int positionY;
 	public void render(Graphics graphics) {
-		graphics.drawOval(positionX, positionY, RADIUS, RADIUS);
+		graphics.fillOval(positionX, positionY, RADIUS, RADIUS);
 	}
 
 }
