@@ -16,6 +16,8 @@ import org.newdawn.slick.SlickException;
 import org.newdawn.slick.gui.TextField;
 import org.newdawn.slick.state.BasicGameState;
 import org.newdawn.slick.state.StateBasedGame;
+import org.newdawn.slick.state.transition.FadeInTransition;
+import org.newdawn.slick.state.transition.FadeOutTransition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,7 +93,7 @@ public class PongGameState extends BasicGameState {
 	}
 
 	private void checkIfUserWantsToExit(Input input, StateBasedGame game) {
-		if (input.isKeyPressed(Input.KEY_ESCAPE)) {
+		if (input.isKeyDown 	(Input.KEY_Q)) {
 			cleanUpState(input, game);
 		}
 	}
@@ -99,7 +101,7 @@ public class PongGameState extends BasicGameState {
 	public void cleanUpState(Input input, StateBasedGame game) {
 		endInputThread();
 		LOGGER.debug("Entering new state");
-		game.enterState(PongGame.CHOOSE_LOBBY_STATE_ID);
+		game.enterState(PongGame.CHOOSE_LOBBY_STATE_ID, new FadeOutTransition(), new FadeInTransition());
 	}
 
 	private void endInputThread() {
@@ -128,7 +130,7 @@ public class PongGameState extends BasicGameState {
 	}
 
 	private void coppyGameId(Input input) {
-		if (connectToField.hasFocus() && input.isKeyPressed(Input.KEY_LCONTROL) && input.isKeyPressed(Input.KEY_C)) {
+		if (connectToField.hasFocus() && input.isKeyDown(Input.KEY_LCONTROL) && input.isKeyDown(Input.KEY_C)) {
 			StringSelection stringSelection = new StringSelection(gameId);
 			Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
 			clpbrd.setContents(stringSelection, stringSelection);

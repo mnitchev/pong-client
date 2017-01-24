@@ -55,13 +55,13 @@ public class AuthenticationState extends BasicGameState {
 
 	@Override
 	public void init(GameContainer container, StateBasedGame game) throws SlickException {
+
 		this.usernameField = new TextField(container, container.getDefaultFont(), USERNAME_FIELD_X, USERNAME_FIELD_Y,
 				FIELD_WIDTH, FIELD_HEIGHT);
 		this.passwordField = new TextField(container, container.getDefaultFont(), PASSWORD_FIELD_X, PASSWORD_FIELD_Y,
 				FIELD_WIDTH, FIELD_HEIGHT);
 		this.serverNameField = new TextField(container, container.getDefaultFont(), USERNAME_FIELD_X,
 				USERNAME_FIELD_Y - 40, FIELD_WIDTH, FIELD_HEIGHT);
-
 		serverNameField.setMaxLength(15);
 		usernameField.setMaxLength(25);
 		passwordField.setMaxLength(10);
@@ -89,14 +89,19 @@ public class AuthenticationState extends BasicGameState {
 	public void update(GameContainer container, StateBasedGame game, int delta) throws SlickException {
 		if (container.getInput().isKeyPressed(Input.KEY_ENTER) && !authenticated) {
 			lockFields();
-			if(!alreadyConnected ){
+			if (!alreadyConnected) {
 				String serverAddress = serverNameField.getText();
 				connectToServer(serverAddress, game);
 			}
 			if (alreadyConnected) {
 				String username = usernameField.getText();
 				String password = passwordField.getText();
-				sendAuthenticationInformation(username, password, game);
+				if (!username.isEmpty() && !password.isEmpty()) {
+					sendAuthenticationInformation(username, password, game);
+				}else{
+					openFields();
+					message = "Username or password is empty";
+				}
 			}
 		} else if (container.getInput().isKeyPressed(Input.KEY_TAB)) {
 			setNextFocus();

@@ -49,9 +49,9 @@ public class InputSenderThread implements Runnable {
 	}
 
 	private void processInput(PrintWriter socketWriter) {
-		if (input.isKeyPressed(Input.KEY_UP)) {
+		if (input.isKeyDown(Input.KEY_UP)) {
 			sendInput(socketWriter, Input.KEY_UP);
-		} else if (input.isKeyPressed(Input.KEY_DOWN)) {
+		} else if (input.isKeyDown(Input.KEY_DOWN)) {
 			sendInput(socketWriter, Input.KEY_DOWN);
 		}
 	}

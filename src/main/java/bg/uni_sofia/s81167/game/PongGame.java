@@ -31,5 +31,6 @@ public class PongGame extends StateBasedGame {
 		this.addState(new AuthenticationState());
 		this.addState(new ChooseLobbyState());
 		this.addState(new PongGameState());
+		this.enterState(AUTHENTICATION_STATE_ID);
 	}
 }
