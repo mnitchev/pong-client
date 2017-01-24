@@ -1,6 +1,8 @@
 # Pong Client
 
 ## Инструкции за инсталация
+Проектът трябва да се build-не с Maven (чрез вграден в IDE-то или от command line)! Иначе няма да се изтеглят dependency-тата.
+
 На клиента са му нужни LWJGL2.9.3 native файлове за съответния OS, които се използват вътрешно от Slick2d библиотеката. Файловете могат да се изтеглят тук : http://legacy.lwjgl.org/download.php.html
 Проектът също така трябва да се пусне с аргумент към Java виртуалната машина : -Djava.library.path=<пътят където са разархивирани горните файлове>/native/<linux|macosx|solaris|windows>
 В Eclipse аргументите се задават като {десен бутон на проекта}->Properties->Run/Debug Settings->{Launch configuration}->Edit->VM arguments
